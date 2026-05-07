@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Doktor Asistanı</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f2ee;
+      --surface: #ffffff;
+      --surface-2: #f0ece6;
+      --border: #e2ddd6;
+      --text: #1a1714;
+      --text-soft: #7a746c;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ef;
+      --accent-hover: #1e4d37;
+      --user-bubble: #2d6a4f;
+      --user-text: #ffffff;
+      --bot-bubble: #ffffff;
+      --shadow: 0 2px 24px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    /* ===== ONBOARDING ===== */
+    #onboardingScreen {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      animation: fadeUp 0.4s ease;
+    }
+
+    .onboard-icon { font-size: 40px; margin-bottom: 20px; display: block; }
+
+    .onboard-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--text);
+      font-weight: 400;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .onboard-subtitle {
+      font-size: 14px;
+      color: var(--text-soft);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .step-indicator { display: flex; gap: 6px; margin-bottom: 28px; }
+
+    .step-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s;
+    }
+
+    .step-dot.active { background: var(--accent); width: 20px; border-radius: 3px; }
+    .step-dot.done   { background: var(--accent); opacity: 0.4; }
+
+    .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+
+    .field-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-soft);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .field-group input,
+    .health-textarea {
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--surface-2);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
+    }
+
+    .field-group input:focus,
+    .health-textarea:focus {
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    .field-group input::placeholder,
+    .health-textarea::placeholder { color: var(--text-soft); }
+
+    .health-textarea { resize: none; min-height: 100px; line-height: 1.6; font-size: 14px; }
+
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .disclaimer-note {
+      font-size: 11.5px;
+      color: var(--text-soft);
+      text-align: center;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    /* ===== CHAT ===== */
+    #chatScreen {
+      display: none;
+      width: 100%;
+      max-width: 720px;
+      height: 90vh;
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .chat-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-header-icon {
+      width: 40px; height: 40px;
+      background: var(--accent-light);
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    .chat-header-info h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px; color: var(--text); font-weight: 400;
+    }
+
+    .chat-header-info p { font-size: 12px; color: var(--text-soft); margin-top: 1px; }
+
+    .status-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: #52b788; margin-right: 4px;
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .disclaimer-bar {
+      background: #fffbf0;
+      border-bottom: 1px solid #f0e6c0;
+      padding: 8px 24px;
+      font-size: 11.5px;
+      color: #8a7040;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 3px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .message {
+      display: flex; flex-direction: column;
+      max-width: 78%;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    .message.user { align-self: flex-end; align-items: flex-end; }
+    .message.bot  { align-self: flex-start; align-items: flex-start; }
+
+    .bubble {
+      padding: 11px 15px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .message.user .bubble {
+      background: var(--user-bubble);
+      color: var(--user-text);
+      border-bottom-right-radius: 3px;
+    }
+
+    .message.bot .bubble {
+      background: var(--bot-bubble);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 3px;
+    }
+
+    .ts { font-size: 10px; color: var(--text-soft); margin-top: 3px; padding: 0 3px; }
+
+    .typing {
+      display: none;
+      align-self: flex-start;
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 16px;
+      border-bottom-left-radius: 3px;
+      gap: 4px; align-items: center;
+    }
+
+    .typing.show { display: flex; }
+
+    .typing span {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--text-soft);
+      animation: bounce 1.1s ease-in-out infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: .18s; }
+    .typing span:nth-child(3) { animation-delay: .36s; }
+
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    .input-area { padding: 14px 18px 18px; border-top: 1px solid var(--border); }
+
+    .input-row {
+      display: flex; gap: 8px; align-items: flex-end;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 9px 9px 9px 14px;
+      transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within { border-color: var(--accent); }
+
+    #messageInput {
+      flex: 1; border: none; background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--text);
+      resize: none; outline: none;
+      max-height: 110px; min-height: 20px; line-height: 1.5;
+    }
+
+    #messageInput::placeholder { color: var(--text-soft); }
+
+    .send-btn {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: var(--accent); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+
+    .send-btn:hover { background: var(--accent-hover); }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { background: var(--border); cursor: default; }
+    .send-btn svg { width: 15px; height: 15px; fill: white; }
+
+    .input-hint { font-size: 10.5px; color: var(--text-soft); text-align: center; margin-top: 7px; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logout-btn {
+  margin-left: auto;
+  padding: 7px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: #fff5f5;
+}
+  </style>
+</head>
+<body>
+
+  <!-- ===== ONBOARDING ===== -->
+  <div id="onboardingScreen">
+    <span class="onboard-icon">🩺</span>
+    <h2 class="onboard-title">AI Doktor Asistanı</h2>
+    <p class="onboard-subtitle">Size kişiselleştirilmiş sağlık bilgisi sunabilmem için önce sizi tanımak istiyorum.</p>
+
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot0"></div>
+      <div class="step-dot" id="dot1"></div>
+    </div>
+
+    <!-- ADIM 1: Ad & Yaş -->
+    <div class="step-content active" id="step0">
+      <div class="field-group">
+        <label>Adınız</label>
+        <input type="text" id="nameInput" placeholder="Örn. Ayşe" autocomplete="off" />
+      </div>
+      <div class="field-group">
+        <label>Yaşınız</label>
+        <input type="number" id="ageInput" placeholder="Örn. 32" min="1" max="120" />
+      </div>
+      <button class="btn-primary" onclick="goToStep1()">Devam Et →</button>
+    </div>
+
+    <!-- ADIM 2: Sağlık sorunu -->
+    <div class="step-content" id="step1">
+      <div class="field-group">
+        <label>Sağlığınızla ilgili sorunuzu belirtin</label>
+        <textarea
+          class="health-textarea"
+          id="healthInput"
+          placeholder="Şikayetlerinizi veya sorularınızı kısaca yazabilirsiniz...&#10;&#10;Örn: Son birkaç gündür baş ağrım var, ne yapmalıyım?"
+        ></textarea>
+      </div>
+      <button class="btn-primary" onclick="startChat()">Sohbeti Başlat →</button>
+    </div>
+
+    <p class="disclaimer-note">⚠️ Bu araç tıbbi teşhis koymaz. Sağlık sorunlarınız için mutlaka bir doktora danışınız.</p>
+  </div>
+
+  <!-- ===== CHAT ===== -->
+  <div id="chatScreen">
+    <div class="chat-header">
+      <div class="chat-header-icon">🩺</div>
+      <div class="chat-header-info">
+        <h1>AI Doktor Asistanı</h1>
+        <p><span class="status-dot"></span>Çevrimiçi · <span id="userNameTag">—</span></p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Oturumu Kapat</button>
+    </div>
+    <div class="disclaimer-bar">⚠️ Tıbbi teşhis konulmaz. Bulgularınız için bir uzmana danışınız.</div>
+
+    <div class="messages" id="messages">
+      <div class="typing" id="typingEl">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="messageInput" placeholder="Sorunuzu yazın..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <p class="input-hint">Enter → gönder &nbsp;·&nbsp; Shift+Enter → yeni satır</p>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/chat";
+    const SESSION_ID = "session_" + Math.random().toString(36).slice(2, 10);
+
+    let userName = "";
+    let userAge  = "";
+
+    // ---- ADIM 1 → ADIM 2 ----
+    function goToStep1() {
+      const name = document.getElementById("nameInput").value.trim();
+      const age  = document.getElementById("ageInput").value.trim();
+      if (!name || !age) { alert("Lütfen adınızı ve yaşınızı girin."); return; }
+      userName = name;
+      userAge  = age;
+
+      document.getElementById("dot0").className = "step-dot done";
+      document.getElementById("dot1").className = "step-dot active";
+      document.getElementById("step0").className = "step-content";
+      document.getElementById("step1").className = "step-content active";
+
+      // İkinci adım textarea'sına odaklan
+      setTimeout(() => document.getElementById("healthInput").focus(), 100);
+    }
+
+    // ---- CHAT'İ BAŞLAT ----
+    function startChat() {
+      const health = document.getElementById("healthInput").value.trim();
+
+      document.getElementById("onboardingScreen").style.display = "none";
+      const chatEl = document.getElementById("chatScreen");
+      chatEl.style.display = "flex";
+      document.getElementById("userNameTag").textContent = userName;
+
+      // İlk mesajı otomatik gönder: asistan giriş bilgilerini hemen alır
+      const intro = health
+        ? `Merhaba, adım ${userName}, yaşım ${userAge}. Şikayetim: ${health}`
+        : `Merhaba, adım ${userName}, yaşım ${userAge}.`;
+
+      sendRaw(intro);
+    }
+
+    // ---- CHAT ----
+    const messagesEl = document.getElementById("messages");
+    const inputEl    = document.getElementById("messageInput");
+    const sendBtn    = document.getElementById("sendBtn");
+    const typingEl   = document.getElementById("typingEl");
+
+    inputEl.addEventListener("input", () => {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + "px";
+    });
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    function getTime() {
+      return new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function appendMessage(role, text) {
+      const msg = document.createElement("div");
+      msg.className = `message ${role}`;
+      msg.innerHTML = `
+        <div class="bubble">${text.replace(/\n/g, "<br>")}</div>
+        <span class="ts">${getTime()}</span>
+      `;
+      messagesEl.insertBefore(msg, typingEl);
+      scrollBottom();
+    }
+
+    function scrollBottom() {
+      setTimeout(() => messagesEl.scrollTop = messagesEl.scrollHeight, 50);
+    }
+
+    async function sendRaw(text) {
+      appendMessage("user", text);
+      typingEl.classList.add("show");
+      sendBtn.disabled = true;
+      scrollBottom();
+      await callAPI(text);
+    }
+
+    function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+      sendRaw(text);
+    }
+
+    async function callAPI(text) {
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, session_id: SESSION_ID }),
+        });
+        if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+        const data = await res.json();
+        typingEl.classList.remove("show");
+        appendMessage("bot", data.reply);
+      } catch (err) {
+        typingEl.classList.remove("show");
+        appendMessage("bot", `⚠️ Sunucuya bağlanılamadı.\n${err.message}`);
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+    function logout() {
+  if (!confirm("Oturumu kapatmak istediğinizden emin misiniz?")) return;
+
+  // Ekranı sıfırla
+  document.getElementById("chatScreen").style.display = "none";
+  document.getElementById("onboardingScreen").style.display = "block";
+
+  // Formu temizle
+  document.getElementById("nameInput").value = "";
+  document.getElementById("ageInput").value = "";
+  document.getElementById("healthInput").value = "";
+
+  // Mesajları temizle
+  const msgs = document.querySelectorAll(".message");
+  msgs.forEach(m => m.remove());
+
+  // Adım göstergesini sıfırla
+  document.getElementById("dot0").className = "step-dot active";
+  document.getElementById("dot1").className = "step-dot";
+  document.getElementById("step0").className = "step-content active";
+  document.getElementById("step1").className = "step-content";
+
+  // Değişkenleri sıfırla
+  userName = "";
+  userAge = "";
+}
+  </script>
+</body>
+</html>
