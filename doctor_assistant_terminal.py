@@ -2,13 +2,13 @@
 problem tanımı: kullanıcının sağlıkla ilgili sorularını anlayan ve yanıtlayan bir GPT tabanlı doktor asistanı chatbot.
     - kullanıcının yasını ve adını dikkate alan cevaplar üretsin.
     - mesaj gecmişini hatırlayarak diyalogu ona göre sürdürmeli: memory
-    - langchain ve OPENAI GPT
+    - langchain ve OpenRouter (Gemini)
     - ilk olarak terminalde çalışacak bir versiyon ardından fastAPI tabanlı bir web servisi olusturulacak.
     - client tarafını yazıp test edelim
 
 veri seti: veri seti yok onun yerine hazır gpt modelini kullanarak prompt ayarlaması yapalım
 
-model tanıtımı: groq
+model tanıtımı: OpenRouter üzerinden Google Gemini
 
 Langchain: LLM kütüphanesi
     - Prompt yönetimi 
@@ -24,7 +24,7 @@ plan/program:
 install libraries 
         - fastapi : web api geliştirmek için bir framework(asenkron)
         uvicorn: fastapi çalıştırmak için gereken bir sunucu
-        -grok ekle
+        - langchain-openai: OpenRouter'a OpenAI uyumlu istemciyle bağlanmak için
         -python-dotenv: .env api anahtarını almak için kullanacağız
         
 
@@ -39,8 +39,10 @@ kullanıcı bilgilerini al isim ve yaş
 '''
 
 
+import os
+
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
@@ -50,10 +52,24 @@ from typing import cast
 # .env dosyasındaki API_KEY'i yükle
 load_dotenv()
 
-# 1. Modeli Kur (Hızlı ve ücretsiz Llama-3-8b)
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile", # Şu anki en güncel ve zeki modellerden biri
-    temperature=0.2 
+# 1. Modeli Kur (OpenRouter üzerinden Gemini)
+# OpenRouter, OpenAI uyumlu bir API sunar; bu yüzden ChatOpenAI'yi base_url ile kullanıyoruz.
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise RuntimeError(
+        "OPENROUTER_API_KEY bulunamadı. .env dosyasına ekleyin "
+        "(.env.example dosyasına bakabilirsiniz)."
+    )
+
+# Modeli .env üzerinden değiştirebilirsiniz.
+# Varsayılan ücretsiz model; limite takılırsanız "google/gemini-2.5-flash" (ücretli, ucuz) deneyin.
+MODEL_NAME = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free")
+
+llm = ChatOpenAI(
+    model=MODEL_NAME,
+    temperature=0.2,
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY,
 )
 # 2. Sistem Promptu (B2/C1 Seviyesi İngilizce Mantık ile Kurgulandı)
 # Modelin adı/yaşı sorması ve geçmişi hatırlaması burada verildi.

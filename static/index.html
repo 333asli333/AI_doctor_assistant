@@ -397,7 +397,8 @@
   </div>
 
   <script>
-    const API_URL = "https://aidoctorassistant-production.up.railway.app/chat";
+    // Aynı sunucudan servis edildiği için göreli yol kullanıyoruz (host bağımsız).
+    const API_URL = "/chat";
     const SESSION_ID = "session_" + Math.random().toString(36).slice(2, 10);
 
     let userName = "";
@@ -494,7 +495,11 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text, session_id: SESSION_ID }),
         });
-        if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+        if (!res.ok) {
+          // Backend anlaşılır bir mesaj döndürüyorsa onu göster
+          const detail = await res.json().catch(() => null);
+          throw new Error(detail?.detail || `Sunucu hatası: ${res.status}`);
+        }
         const data = await res.json();
         typingEl.classList.remove("show");
         appendMessage("bot", data.reply);

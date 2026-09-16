@@ -1,0 +1,2 @@
+# Linux sunucuda/Docker'da çalıştığı için satır sonlarını LF'e sabitliyoruz.
+* text=auto eol=lf

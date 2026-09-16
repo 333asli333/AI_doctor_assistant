@@ -1,0 +1,23 @@
+# AI Doktor Asistanı — bağımsız kompozisyon.
+# Kullanım, repo kökünden:  docker compose up -d --build
+# .env doldurulmuş olmalı (bkz. .env.example).
+#
+# Sunucudaki ters vekil (SSL'i o bitiriyor) alan adını host portuna sürer:
+#   doctor-assistant.aisli.dev  ->  host 8002  (bu servis)
+# Halihazırda kullanılan portlar: 8000 aurelia frontend, 8001 aurelia backend.
+# Yeni bir servis eklerken sunucuda `docker ps` ile boş portu doğrula.
+
+services:
+  ai-doctor:
+    build: .
+    container_name: ai-doctor
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${AI_DOCTOR_PORT:-8002}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

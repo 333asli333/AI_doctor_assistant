@@ -1,0 +1,15 @@
+# Ortam değişkenleri
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# İşletim sistemi / editör
+.DS_Store
+.idea/
+.vscode/
