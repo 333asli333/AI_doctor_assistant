@@ -62,14 +62,19 @@ if not OPENROUTER_API_KEY:
     )
 
 # Modeli .env üzerinden değiştirebilirsiniz.
-# Varsayılan ücretsiz model; limite takılırsanız "google/gemini-2.5-flash" (ücretli, ucuz) deneyin.
-MODEL_NAME = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free")
+# OpenRouter'da ücretsiz Gemini kalmadı; 2.5-flash milyon token başına ~0.30$,
+# bu kullanım için pratikte kuruşlar. Daha ucuzu: google/gemini-2.5-flash-lite
+MODEL_NAME = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
 
 llm = ChatOpenAI(
     model=MODEL_NAME,
     temperature=0.2,
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
+    # max_tokens verilmezse OpenRouter modelin tavanını (65k) varsayar ve
+    # bakiyeyi o tavana göre kontrol edip 402 döner. Yanıtlar kısa olduğu
+    # için 800 fazlasıyla yeterli ve bu hatayı tamamen önlüyor.
+    max_tokens=800,
 )
 # 2. Sistem Promptu (B2/C1 Seviyesi İngilizce Mantık ile Kurgulandı)
 # Modelin adı/yaşı sorması ve geçmişi hatırlaması burada verildi.

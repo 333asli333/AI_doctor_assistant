@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green?logo=fastapi)
 ![LangChain](https://img.shields.io/badge/LangChain-0.2+-yellow)
-![OpenRouter](https://img.shields.io/badge/OpenRouter-Gemini%202.0%20Flash-orange)
+![OpenRouter](https://img.shields.io/badge/OpenRouter-Gemini%202.5%20Flash-orange)
 ![Deploy](https://img.shields.io/badge/Deploy-Docker%20%2B%20Dokploy-blue?logo=docker)
 
 ---
