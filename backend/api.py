@@ -1,46 +1,47 @@
 """
-api.py — FastAPI katmanı
-Mevcut doctor_assistant_terminal.py dosyasını değiştirmeden import eder.
+api.py — FastAPI katmanı.
+
+LLM zinciri ve hafıza llm.py'de tanımlıdır; burası yalnızca HTTP katmanıdır.
+Arayüz ayrı bir serviste (frontend/) durur, bu servis yalnız JSON konuşur.
 Çalıştırmak için: uvicorn api:app --reload
 """
 
 import logging
 import os
-from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Mevcut chatbot modülünü import et
-from doctor_assistant_terminal import assistant_with_history
+from llm import MODEL_NAME, assistant_with_history
 from langchain_core.runnables.config import RunnableConfig
 
 logger = logging.getLogger("ai-doctor")
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-
 app = FastAPI(title="AI Doktor Asistanı")
+
+# Frontend aynı origin'den (nginx proxy) geliyorsa CORS'a hiç gerek yok.
+# Ayrı bir alan adına kurulduysa FRONTEND_URL doldurulmalı; boşsa hepsine izin
+# verilir ki yerel geliştirmede vite sunucusu engellenmesin.
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[FRONTEND_URL] if FRONTEND_URL else ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Request/Response Modelleri ---
+
 class ChatRequest(BaseModel):
     message: str
     session_id: str = "default_session"
 
+
 class ChatResponse(BaseModel):
     reply: str
 
-# --- Chat Endpoint ---
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     if not request.message.strip():
@@ -50,11 +51,11 @@ async def chat(request: ChatRequest):
     try:
         response = await assistant_with_history.ainvoke(
             {"question": request.message},
-            config=config
+            config=config,
         )
     except Exception as exc:
-        # Ücretsiz modelde kota/limit hataları sık görülebilir; kullanıcıya
-        # teknik detay yerine anlaşılır bir mesaj döndürüyoruz.
+        # Kota/limit hataları olabildiğince sık görülür; kullanıcıya teknik
+        # detay yerine anlaşılır bir mesaj döndürüyoruz.
         logger.exception("LLM çağrısı başarısız oldu")
         raise HTTPException(
             status_code=503,
@@ -63,17 +64,11 @@ async def chat(request: ChatRequest):
 
     return ChatResponse(reply=str(response.content))
 
-# --- Sağlık kontrolü (deploy platformları için) ---
+
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
-
-# --- Static dosyaları serve et ---
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-@app.get("/")
-async def root():
-    return FileResponse(STATIC_DIR / "index.html")
+    """Ters vekil ve konteyner sağlık kontrolü için."""
+    return {"status": "ok", "model": MODEL_NAME}
 
 
 if __name__ == "__main__":

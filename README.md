@@ -1,136 +1,124 @@
 # 🩺 AI Doktor Asistanı / AI Doctor Assistant
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green?logo=fastapi)
-![LangChain](https://img.shields.io/badge/LangChain-0.2+-yellow)
+![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?logo=fastapi)
+![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
+![Vite](https://img.shields.io/badge/Vite-6-646cff?logo=vite)
+![Bun](https://img.shields.io/badge/Bun-1.x-black?logo=bun)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-Gemini%202.5%20Flash-orange)
-![Deploy](https://img.shields.io/badge/Deploy-Docker%20%2B%20Dokploy-blue?logo=docker)
 
 ---
 
 ## 🇹🇷 Türkçe
 
 ### Proje Hakkında
-Kullanıcının adını, yaşını ve sağlık şikayetini alarak kişiselleştirilmiş Türkçe sağlık bilgisi sunan, hafızalı bir AI doktor asistanı. OpenRouter üzerinden çalışan Google Gemini modeli, LangChain ile yönetilen konuşma hafızası ve FastAPI tabanlı web servisi ile geliştirilmiştir.
+Kullanıcının adını, yaşını ve sağlık şikayetini alarak kişiselleştirilmiş Türkçe sağlık bilgisi sunan, hafızalı bir AI doktor asistanı. OpenRouter üzerinden çalışan Google Gemini modeli, LangChain ile yönetilen konuşma hafızası ve FastAPI tabanlı bir servis ile geliştirilmiştir.
 
 > ⚠️ Bu uygulama tıbbi teşhis koymaz. Sağlık sorunlarınız için mutlaka bir doktora danışınız.
 
 ### Özellikler
 - 🧠 **Konuşma hafızası** — oturum boyunca önceki mesajları hatırlar
 - 👤 **Kişiselleştirme** — kullanıcıya ismiyle hitap eder, yaşa uygun yanıt üretir
-- 🚨 **Acil durum algısı** — kritik semptomlarda (göğüs ağrısı, nefes darlığı vb.) doğrudan acil uyarısı verir
+- 🚨 **Acil durum algısı** — kritik semptomlarda doğrudan acil uyarısı verir, başka öneri eklemez
 - 🌐 **Web arayüzü** — giriş formu (ad, yaş, şikayet) + sohbet ekranı
 - 🔒 **Oturum yönetimi** — oturumu kapat ve yeni kullanıcı başlat
 
-### Teknoloji Stack
-| Katman | Teknoloji |
-|---|---|
-| LLM | Google Gemini (OpenRouter) |
-| LLM Yönetimi | LangChain |
-| Backend | FastAPI + Uvicorn |
-| Frontend | Vanilla HTML/CSS/JS |
-| Deploy | Docker + Dokploy (self-hosted) |
+### Mimari
+
+İki bağımsız Docker kompozisyonu. SSL'i sunucudaki ters vekil bitirir.
+
+| Parça | Yol | Host portu |
+|---|---|---|
+| Backend — FastAPI + LangChain | `backend/` | 8003 |
+| Frontend — React + Vite + nginx | `frontend/` | 8002 |
+
+Frontend, `/chat` ve `/health` isteklerini ortak docker ağı üzerinden backend'e proxy'ler; bu yüzden tek alan adı yeter. Ayrı bir API alan adı isterseniz `VITE_API_BASE` doldurulup **imaj yeniden derlenir** (adres derlemeye gömülür).
+
+```
+ai-doctor/
+├── backend/
+│   ├── llm.py            # model, prompt, zincir, hafıza
+│   ├── api.py            # FastAPI (yalnız JSON)
+│   ├── terminal.py       # terminal sürümü
+│   ├── smoke_test.py     # davranış doğrulaması
+│   ├── Dockerfile · docker-compose.yml · Makefile
+│   └── .env.example
+└── frontend/
+    ├── src/              # React + TypeScript
+    ├── Dockerfile · nginx.conf · docker-compose.yml · Makefile
+    └── .env.example
+```
 
 ### Kurulum
 
-```bash
-# Repoyu klonla
-git clone https://github.com/333asli333/AI_doctor_assistant.git
-cd AI_doctor_assistant
-
-# Sanal ortam oluştur
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
-
-# Bağımlılıkları yükle
-pip install -r requirements.txt
-
-# .env dosyası oluştur
-cp .env.example .env   # sonra OPENROUTER_API_KEY değerini doldurun
-
-# Çalıştır
-uvicorn api:app --reload
-```
-
-Tarayıcıda `http://localhost:8000` adresini aç.
-
-### Ekran Görüntüleri
-
-<!-- Ekran görüntüsü veya GIF buraya eklenecek -->
-<!-- ![Demo](assets/demo.gif) -->
-
----
-
-## 🚀 Deploy (Dokploy)
-
-Sunucu Dokploy ile yönetiliyor, SSL'i ters vekil bitiriyor. **Sunucuda elle nginx
-ayarı yapılmaz, certbot çalıştırılmaz.**
-
-### 1. DNS kaydı (Cloudflare)
-
-`aisli.dev` alan adı Cloudflare'de. DNS → Records → Add record:
-
-| Alan | Değer |
-|---|---|
-| Type | `A` |
-| Name | `doctor-assistant` |
-| IPv4 | sunucunun IP'si (Dokploy panelinden) |
-| Proxy | mevcut `aurelia` kaydıyla aynı yapılır |
-
-Not: zone'da `*.aisli.dev → 192.168.1.1` şeklinde bir joker kayıt var; bu özel bir
-adres olduğu için hiçbir yere gitmez. Her alt alan adı **açıkça** eklenmelidir.
-
-### 2. .env
+Ortak ağ bir kez oluşturulur:
 
 ```bash
-cp .env.example .env   # OPENROUTER_API_KEY değerini doldur
+docker network create ai-doctor
 ```
 
-Dokploy kullanılıyorsa değişkenler panelin Environment sekmesine girilir.
-
-### 3. Dokploy uygulaması
-
-Panel: `https://server.aisli.dev` → Create Application
-
-- Kaynak: GitHub → `333asli333/AI_doctor_assistant`, dal `main`
-- Build type: **Dockerfile** (repo kökündeki `Dockerfile`)
-- Environment: `OPENROUTER_API_KEY`, istersen `OPENROUTER_MODEL`
-- Domain: `doctor-assistant.aisli.dev`, container port **8000**, HTTPS açık
-
-Deploy'a bas. Sonrası `main`'e push → Dokploy çeker.
-
-### Dokploy olmadan (elle compose)
+**Backend**
 
 ```bash
-cd /opt/ai-doctor && docker compose up -d --build
-curl http://127.0.0.1:8002/health
+cd backend
+cp .env.example .env      # OPENROUTER_API_KEY değerini doldurun
+make up                   # derle ve başlat
+make health               # {"status":"ok", ...}
 ```
 
-Host portu 8002'dir; ters vekil alan adını bu porta sürer.
-(8000 aurelia frontend, 8001 aurelia backend tarafından kullanılıyor.)
-
-### Güncelleme
+**Frontend**
 
 ```bash
-git push origin main      # Dokploy otomatik çeker
+cd frontend
+make up
 ```
+
+Tarayıcıda `http://localhost:8002` adresini açın.
+
+### Yerel geliştirme
+
+Docker olmadan, iki terminalde:
+
+```bash
+cd backend  && make dev        # uvicorn :8000, canlı yeniden yükleme
+cd frontend && make dev        # vite :5173, /chat isteklerini :8000'e proxy'ler
+```
+
+Terminal sürümü için: `cd backend && make terminal`
+
+### Doğrulama
+
+```bash
+cd backend  && make test       # gerçek API'ye karşı davranış testi
+cd frontend && make typecheck  # TypeScript denetimi
+```
+
+`make test` OpenRouter'a gerçek istek atar ve kredi harcar. Üç şeyi kontrol eder: isimle hitap, hafıza, acil durum yanıtının tek cümle kalması.
+
+### Model
+
+Varsayılan `google/gemini-2.5-flash` (~0.30$/1M token). OpenRouter'da **ücretsiz Gemini kalmadı**; daha ucuzu `google/gemini-2.5-flash-lite` (~0.10$) ama yönergeleri daha zayıf takip ediyor. Model `OPENROUTER_MODEL` ile değiştirilir.
+
+`max_tokens` 800'e sabitlenmiştir: verilmezse OpenRouter modelin tavanını (65k) varsayıp bakiyeyi ona göre kontrol eder ve düşük bakiyede 402 döner.
+
+### Deploy (Dokploy)
+
+Sunucu Dokploy ile yönetilir, SSL'i ters vekil bitirir. Sunucuda elle nginx ayarı yapılmaz, certbot çalıştırılmaz.
+
+1. **DNS (Cloudflare):** `doctor-assistant` için A kaydı → sunucu IP'si.
+2. **Backend servisi:** Build type `Dockerfile`, Build path `backend/`, Environment'a `OPENROUTER_API_KEY`. Alan adı gerekmez.
+3. **Frontend servisi:** Build type `Dockerfile`, Build path `frontend/`, Domain `doctor-assistant.aisli.dev`, **Container Port 80**.
+
+İki servis de aynı docker ağında olmalı ki nginx backend'e ulaşabilsin.
 
 ---
 
 ## 🇬🇧 English
 
 ### About
-A conversational AI health assistant that collects the user's name, age, and health complaint to provide personalized Turkish-language health information. Built with Google Gemini via OpenRouter, LangChain conversation memory, and a FastAPI web service.
+A conversational AI health assistant that collects the user's name, age, and health complaint to provide personalized Turkish-language health information. Built with Google Gemini via OpenRouter, LangChain conversation memory, a FastAPI backend, and a React + Vite frontend served by nginx.
 
 > ⚠️ This application does not provide medical diagnoses. Always consult a doctor for health concerns.
-
-### Features
-- 🧠 **Conversation memory** — remembers previous messages within a session
-- 👤 **Personalization** — addresses users by name, tailors responses by age
-- 🚨 **Emergency detection** — triggers immediate emergency warning for critical symptoms (chest pain, shortness of breath, etc.)
-- 🌐 **Web interface** — onboarding form (name, age, complaint) + chat screen
-- 🔒 **Session management** — logout and start a new session
 
 ### Tech Stack
 | Layer | Technology |
@@ -138,54 +126,27 @@ A conversational AI health assistant that collects the user's name, age, and hea
 | LLM | Google Gemini (OpenRouter) |
 | LLM Management | LangChain |
 | Backend | FastAPI + Uvicorn |
-| Frontend | Vanilla HTML/CSS/JS |
+| Frontend | React + Vite + TypeScript (bun) |
+| Web server | nginx |
 | Deployment | Docker + Dokploy (self-hosted) |
 
-### Installation
+### Quick start
 
 ```bash
-# Clone the repo
-git clone https://github.com/333asli333/AI_doctor_assistant.git
-cd AI_doctor_assistant
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env   # sonra OPENROUTER_API_KEY değerini doldurun
-
-# Run
-uvicorn api:app --reload
+docker network create ai-doctor
+cd backend  && cp .env.example .env && make up
+cd ../frontend && make up
 ```
 
-Open `http://localhost:8000` in your browser.
+Open `http://localhost:8002`.
 
-### Screenshots
-
-<!-- Add screenshot or GIF here -->
-<!-- ![Demo](assets/demo.gif) -->
+Run `make help` in either folder to see all targets.
 
 ---
 
-## Project Structure
+### Bilinen sınır / Known limitation
 
-```
-AI_doctor_assistant/
-├── doctor_assistant_terminal.py   # LLM + LangChain core (model, memory, chain)
-├── api.py                         # FastAPI web service
-├── requirements.txt
-├── .env                           # OPENROUTER_API_KEY (not committed)
-├── .env.example                   # Örnek ortam değişkenleri
-├── Dockerfile
-├── docker-compose.yml
-└── static/
-    └── index.html                 # Web UI (onboarding + chat)
-```
+Sohbet hafızası süreç belleğinde (`store` sözlüğü) tutulur: konteyner yeniden başlatıldığında tüm konuşmalar silinir ve backend tek worker ile çalışmak zorundadır. Kalıcılık gerekirse bir veritabanı katmanı eklenmelidir.
 
 ---
 

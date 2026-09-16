@@ -3,7 +3,7 @@ problem tanımı: kullanıcının sağlıkla ilgili sorularını anlayan ve yan�
     - kullanıcının yasını ve adını dikkate alan cevaplar üretsin.
     - mesaj gecmişini hatırlayarak diyalogu ona göre sürdürmeli: memory
     - langchain ve OpenRouter (Gemini)
-    - ilk olarak terminalde çalışacak bir versiyon ardından fastAPI tabanlı bir web servisi olusturulacak.
+    - terminal sürümü terminal.py'de, web servisi api.py'de; ikisi de bu modülü kullanır.
     - client tarafını yazıp test edelim
 
 veri seti: veri seti yok onun yerine hazır gpt modelini kullanarak prompt ayarlaması yapalım
@@ -124,35 +124,3 @@ assistant_with_history = RunnableWithMessageHistory(
     input_messages_key="question",
     history_messages_key="history",
 )
-
-if __name__ == "__main__":
-    print("-" * 50)
-    print("🩺 AI Doktor Asistanı Terminal Versiyonu")
-    print("Çıkış yapmak için 'q' yazabilirsiniz.")
-    print("-" * 50)
-
-    session_id = "user_1"
-
-    while True:
-        user_input = input("\nSiz: ")
-        
-        if user_input.lower() in ["q", "quit", "exit"]:
-            print("Sağlıklı günler dileriz, hoşça kalın!")
-            break
-            
-        if not user_input.strip():
-            continue
-
-        config = cast(RunnableConfig, {"configurable": {"session_id": session_id}})
-        response = assistant_with_history.invoke({"question": user_input}, config= config)
-        
-        print(f"\nAsistan: {response.content}")
-
-
-
-
-
-
-
-
-
