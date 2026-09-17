@@ -7,3 +7,7 @@ Makefile
 smoke_test.py
 docker-compose.yml
 .dockerignore
+tests/
+pytest.ini
+requirements-dev.txt
+.pytest_cache/

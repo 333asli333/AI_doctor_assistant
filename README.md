@@ -2,6 +2,7 @@
 
 🟢 **[Canlı uygulama / Live app](https://doctor-assistant.aisli.dev)** · 👩‍💻 [Portfolyo / Portfolio](https://aisli.dev)
 
+[![CI](https://github.com/333asli333/AI_doctor_assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/333asli333/AI_doctor_assistant/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?logo=fastapi)
 ![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
@@ -25,6 +26,16 @@ Kullanıcının adını, yaşını ve sağlık şikayetini alarak kişiselleşti
 - 🌐 **Web arayüzü** — giriş formu (ad, yaş, şikayet) + sohbet ekranı
 - 🔒 **Oturum yönetimi** — oturumu kapat ve yeni kullanıcı başlat
 
+### Ekran görüntüleri
+
+<p align="center">
+  <img src="screenshots/1-giris.png" width="32%" alt="Giriş: ad, yaş ve şikayet"/>
+  <img src="screenshots/2-sohbet.png" width="32%" alt="Kişiye özel yanıt"/>
+  <img src="screenshots/3-acil-durum.png" width="32%" alt="Acil durum uyarısı"/>
+</p>
+
+<sub>Soldan sağa: giriş formu · kişiye özel yanıt · acil belirtide tek cümlelik yönlendirme</sub>
+
 ### Mimari
 
 Birbirine bağımlı olmayan iki servis. SSL'i sunucudaki ters vekil bitirir.
@@ -42,6 +53,7 @@ ai-doctor/
 │   ├── llm.py            # model, prompt, zincir, hafıza
 │   ├── api.py            # FastAPI (yalnız JSON)
 │   ├── terminal.py       # terminal sürümü
+│   ├── tests/            # birim testleri (pytest, sahte model)
 │   ├── smoke_test.py     # davranış doğrulaması
 │   ├── Dockerfile · docker-compose.yml · Makefile
 │   └── .env.example
@@ -85,9 +97,12 @@ Terminal sürümü için: `cd backend && make terminal`
 ### Doğrulama
 
 ```bash
+cd backend  && pytest          # birim testleri (API anahtarı ve ağ gerekmez)
 cd backend  && make test       # gerçek API'ye karşı davranış testi
 cd frontend && make typecheck  # TypeScript denetimi
 ```
+
+`pytest` modeli sahte bir modelle değiştirir; HTTP katmanını (doğrulama, 503 hata yönetimi), oturum hafızasını ve sistem promptundaki güvenlik kurallarını kontrol eder ve her push'ta GitHub Actions'ta çalışır.
 
 `make test` OpenRouter'a gerçek istek atar ve kredi harcar. Kontrol ettikleri:
 
@@ -125,6 +140,16 @@ Frontend varsayılan olarak `https://doctor-assistant-api.aisli.dev` adresine de
 A conversational AI health assistant that collects the user's name, age, and health complaint to provide personalized Turkish-language health information. Built with Google Gemini via OpenRouter, LangChain conversation memory, a FastAPI backend, and a React + Vite frontend served by nginx.
 
 > ⚠️ This application does not provide medical diagnoses. Always consult a doctor for health concerns.
+
+### Screenshots
+
+<p align="center">
+  <img src="screenshots/1-giris.png" width="32%" alt="Intake: name, age and complaint"/>
+  <img src="screenshots/2-sohbet.png" width="32%" alt="Personalised reply"/>
+  <img src="screenshots/3-acil-durum.png" width="32%" alt="Emergency warning"/>
+</p>
+
+<sub>Left to right: intake form · personalised reply · one-sentence referral on an emergency symptom</sub>
 
 ### Tech Stack
 | Layer | Technology |
