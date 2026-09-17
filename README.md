@@ -106,10 +106,10 @@ Varsayılan `google/gemini-2.5-flash` (~0.30$/1M token). OpenRouter'da **ücrets
 Sunucu Dokploy ile yönetilir, SSL'i ters vekil bitirir. Sunucuda elle nginx ayarı yapılmaz, certbot çalıştırılmaz.
 
 1. **DNS (Cloudflare):** `doctor-assistant` için A kaydı → sunucu IP'si.
-2. **Backend servisi:** Build type `Dockerfile`, Build path `/backend`, Environment'a `OPENROUTER_API_KEY`. Alan adı gerekmez.
-3. **Frontend servisi:** Build type `Dockerfile`, Build path `/frontend`, Domain `doctor-assistant.aisli.dev`, **Container Port 80**, Environment'a `BACKEND_URL=http://<backend App Name>:8000`.
+2. **Backend servisi:** Build type `Dockerfile`, Build path `backend/`, Environment'a `OPENROUTER_API_KEY`. Alan adı gerekmez.
+3. **Frontend servisi:** Build type `Dockerfile`, Build path `frontend/`, Domain `doctor-assistant.aisli.dev`, **Container Port 80**.
 
-`BACKEND_URL` frontend nginx'inin istekleri taşıyacağı adrestir; Dokploy'da backend uygulamasının **App Name** değeri yazılır. Yerel compose'da varsayılan `http://backend:8000` kullanılır. nginx adresi istek anında çözdüğü için backend kapalıyken de açılır, yalnız API istekleri 502 döner.
+İki servis de aynı docker ağında olmalı ki nginx backend'e ulaşabilsin.
 
 ---
 
