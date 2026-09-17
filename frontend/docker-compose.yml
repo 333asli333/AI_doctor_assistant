@@ -1,8 +1,8 @@
 # AI Doktor Asistanı — frontend (bağımsız kompozisyon).
 # Kullanım, frontend/ içinden:  docker compose up -d --build
 #
-# Backend'i ne derler ne başlatır; yalnız ortak ağdaki "backend" servisine
-# proxy'ler. Backend kapalıyken de ayağa kalkar (o isteklere 502 döner).
+# Backend'i ne derler ne başlatır; yalnız BACKEND_URL adresine (varsayılan
+# ortak ağdaki "backend") proxy'ler. Backend kapalıyken de ayağa kalkar.
 # İlk kurulumda ortak ağı bir kez oluştur:  docker network create ai-doctor
 #
 # Sunucudaki ters vekil alan adını host portuna sürer:
