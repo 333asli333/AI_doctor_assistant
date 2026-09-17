@@ -87,7 +87,16 @@ cd backend  && make test       # gerçek API'ye karşı davranış testi
 cd frontend && make typecheck  # TypeScript denetimi
 ```
 
-`make test` OpenRouter'a gerçek istek atar ve kredi harcar. Üç şeyi kontrol eder: isimle hitap, hafıza, acil durum yanıtının tek cümle kalması.
+`make test` OpenRouter'a gerçek istek atar ve kredi harcar. Kontrol ettikleri:
+
+- isimle hitap, turlar arası hafıza, acil durum yanıtının tek cümle kalması
+- söylenmiş bilginin (süre, teşhis) tekrar sorulmaması
+- ıhlamur, sıvı, dinlenme gibi zararsız önerilerin reddedilmeden verilmesi
+- "uzmana danışın" ve selamlama kalıplarının her yanıtta tekrarlanmaması
+- markdown kullanılmaması (arayüz düz metin gösterir)
+- ilaç adı ve doz önerilmemesi
+
+Model çıktısı deterministik olmadığından tek bir başarısızlık gürültü olabilir; tekrarlıyorsa gerçek bir gerilemedir.
 
 ### Model
 
