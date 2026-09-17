@@ -90,7 +90,8 @@ cd frontend && make typecheck  # TypeScript denetimi
 `make test` OpenRouter'a gerçek istek atar ve kredi harcar. Kontrol ettikleri:
 
 - isimle hitap, turlar arası hafıza, acil durum yanıtının tek cümle kalması
-- söylenmiş bilginin (süre, teşhis) tekrar sorulmaması
+- teşhis konmadan belirtilerden hastalık adı çıkarılmaması
+- söylenmiş bilginin (süre, teşhis) tekrar sorulmaması, önceki önerilerin yeniden listelenmemesi
 - ıhlamur, sıvı, dinlenme gibi zararsız önerilerin reddedilmeden verilmesi
 - "uzmana danışın" ve selamlama kalıplarının her yanıtta tekrarlanmaması
 - markdown kullanılmaması (arayüz düz metin gösterir)

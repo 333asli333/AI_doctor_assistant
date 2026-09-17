@@ -14,6 +14,7 @@ tek bir başarısızlık gürültü olabilir, tekrarlıyorsa gerçek bir gerilem
 import asyncio
 import re
 import sys
+from difflib import SequenceMatcher
 
 from langchain_core.runnables.config import RunnableConfig
 
@@ -25,6 +26,32 @@ GENEL_YONLENDIRME = re.compile(r"(sağlık )?uzman(ın)?a danış|sağlık profe
 RET_KALIBI = re.compile(r"yetkim bulunma|tavsiyede bulunamam|öneride bulunamam|öneri veremem", re.I)
 SURE_SORUSU = re.compile(r"ne kadar süre", re.I)
 EV_BAKIMI = ("sıvı", "dinlen", "ıhlamur", "bitki çayı", "ılık", "gargara", "nem", "sıcak tut")
+HASTALIK_ADI = re.compile(
+    r"enfeksiyon|grip|soğuk algınlığı|nezle|farenjit|larenjit|sinüzit|bronşit|anjin|tonsillit|covid|virüs",
+    re.I,
+)
+
+
+MADDE = re.compile(r"^\s*[•*\-]\s+(.*)")
+
+
+def maddeler(metin: str) -> list[str]:
+    """Yanıttaki madde satırları; model hangi işareti kullanırsa kullansın."""
+    return [m.group(1).strip().lower() for m in map(MADDE.match, metin.splitlines()) if m]
+
+
+def tekrarlanan_maddeler(yeni: str, oncekiler: list[str]) -> list[str]:
+    """Önceki yanıtlardaki bir maddeye çok benzeyen yeni maddeler.
+
+    Anahtar kelimeye bakmak yetmiyor: "gece için ılık duş alın" yeni bir
+    öneri olduğu halde "ılık içecek için" maddesiyle aynı kelimeyi taşıyor.
+    Metin benzerliği, aynı maddenin yeniden yazılmasını ayırt ediyor.
+    """
+    eski = [m for y in oncekiler for m in maddeler(y)]
+    return [
+        m for m in maddeler(yeni)
+        if any(SequenceMatcher(None, m, e).ratio() >= 0.6 for e in eski)
+    ]
 
 
 async def sor(session_id: str, soru: str) -> str:
@@ -70,8 +97,22 @@ async def main() -> int:
         await sor(sid, "Doktora gittim ama verdiği ilaç işe yaramadı."),
         await sor(sid, "3 gündür böyle, üst solunum yolu enfeksiyonu dendi."),
     ]
+    # Teşhis henüz konmamışken belirtilerden hastalık adı çıkarmak, "teşhis
+    # koyma" kuralının sınırı; canlıda ilk yanıtta bu oldu.
+    kontrol(
+        "teşhis konmadan hastalık adı verilmiyor",
+        not HASTALIK_ADI.search(yanitlar[0]),
+        yanitlar[0],
+    )
+
     c = await sor(sid, "Ne yapmalıyım?")
     yanitlar.append(c)
+    tekrar = tekrarlanan_maddeler(c, yanitlar[:-1])
+    kontrol(
+        f"önceki öneriler yeniden listelenmiyor ({len(tekrar)} madde tekrar)",
+        len(tekrar) <= 1,
+        c,
+    )
     kontrol("süre söylendikten sonra tekrar sorulmuyor", not SURE_SORUSU.search(c), c)
     kontrol(
         "'ne yapmalıyım' sorusuna somut ev bakımı önerisi",
@@ -105,7 +146,7 @@ async def main() -> int:
 
     kontrol(
         "markdown kullanılmıyor",
-        not any("**" in y or re.search(r"^#", y, re.M) for y in yanitlar),
+        not any("**" in y or re.search(r"^\s*(#|\*\s|-\s)", y, re.M) for y in yanitlar),
         "(" + str(len(yanitlar)) + " yanıt tarandı)",
     )
 
