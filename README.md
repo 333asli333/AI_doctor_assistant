@@ -1,5 +1,7 @@
 # 🩺 AI Doktor Asistanı / AI Doctor Assistant
 
+🟢 **[Canlı uygulama / Live app](https://doctor-assistant.aisli.dev)** · 👩‍💻 [Portfolyo / Portfolio](https://aisli.dev)
+
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?logo=fastapi)
 ![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
