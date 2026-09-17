@@ -10,10 +10,11 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Tarayıcının API'ye gideceği adres derlemeye GÖMÜLÜR; değişirse restart
-# yetmez, imaj yeniden derlenmeli. Boş bırakılırsa aynı origin kullanılır ve
-# aşağıdaki nginx proxy'si devreye girer.
-ARG VITE_API_BASE=""
+# yetmez, imaj yeniden derlenmeli. nginx API'yi proxy'lemediği için boş
+# bırakılamaz — build arg ile başka bir adres verilebilir.
+ARG VITE_API_BASE=https://doctor-assistant-api.aisli.dev
 ENV VITE_API_BASE=$VITE_API_BASE
+RUN test -n "$VITE_API_BASE" || (echo "VITE_API_BASE boş olamaz" && exit 1)
 RUN bun run build
 
 # --- 2. Aşama: servis (nginx) ---

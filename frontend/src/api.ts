@@ -1,6 +1,6 @@
-// VITE_API_BASE boşsa göreli yol kullanılır: üretimde nginx, geliştirmede
-// vite proxy'si isteği backend'e taşır. Ayrı alan adı gerekiyorsa derleme
-// sırasında doldurulur.
+// Backend'in kök adresi derlemeye gömülür. Üretim nginx'i API'yi proxy'lemez,
+// o yüzden docker derlemesinde doludur. Boşsa göreli yol kullanılır; bu yalnız
+// `bun run dev` altında çalışır, çünkü isteği vite proxy'si taşır.
 const TABAN = import.meta.env.VITE_API_BASE ?? "";
 
 export type SohbetYaniti = { reply: string };

@@ -22,10 +22,7 @@ dev: venv  ## Yerelde canlı yeniden yüklemeyle çalıştır
 terminal: venv  ## Terminal sürümünü çalıştır
 	$(PY) terminal.py
 
-net:  ## Ortak docker ağını oluştur (bir kez)
-	-docker network create ai-doctor
-
-up: net  ## Konteyneri derle ve başlat
+up:  ## Konteyneri derle ve başlat
 	$(COMPOSE) up -d --build
 
 down:  ## Konteyneri durdur

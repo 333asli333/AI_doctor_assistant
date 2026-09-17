@@ -1,12 +1,12 @@
 # AI Doktor Asistanı — frontend (bağımsız kompozisyon).
 # Kullanım, frontend/ içinden:  docker compose up -d --build
 #
-# Backend'i ne derler ne başlatır; yalnız ortak ağdaki "backend" servisine
-# proxy'ler. Backend kapalıyken de ayağa kalkar (o isteklere 502 döner).
-# İlk kurulumda ortak ağı bir kez oluştur:  docker network create ai-doctor
+# Backend'e hiçbir bağımlılığı yoktur: ne derler, ne başlatır, ne de ağına
+# bağlanır. Tarayıcı API'ye VITE_API_BASE adresinden doğrudan gider.
 #
-# Sunucudaki ters vekil alan adını host portuna sürer:
-#   doctor-assistant.aisli.dev  ->  host 8002
+# Sunucudaki ters vekil alan adlarını host portlarına sürer:
+#   doctor-assistant.aisli.dev      ->  host 8002  (bu servis)
+#   doctor-assistant-api.aisli.dev  ->  host 8003  (backend)
 # (8000 ve 8001 aurelia'ya ait.)
 
 services:
@@ -14,16 +14,10 @@ services:
     build:
       context: .
       args:
-        # Boş: arayüz göreli yola gider, nginx yukarıda backend'e proxy'ler.
-        # Ayrı bir API alan adı kullanılacaksa burayı doldur ve YENİDEN DERLE.
-        VITE_API_BASE: ${VITE_API_BASE:-}
+        # Derlemeye gömülür; değişirse imaj YENİDEN DERLENMELİ.
+        # Yerelde backend compose'u ile denemek için: http://localhost:8003
+        VITE_API_BASE: ${VITE_API_BASE:-https://doctor-assistant-api.aisli.dev}
     container_name: ai-doctor-frontend
     restart: unless-stopped
     ports:
       - "${AI_DOCTOR_FRONTEND_PORT:-8002}:80"
-    networks:
-      - ai-doctor
-
-networks:
-  ai-doctor:
-    external: true

@@ -2,7 +2,8 @@
 api.py — FastAPI katmanı.
 
 LLM zinciri ve hafıza llm.py'de tanımlıdır; burası yalnızca HTTP katmanıdır.
-Arayüz ayrı bir serviste (frontend/) durur, bu servis yalnız JSON konuşur.
+Arayüz ayrı bir serviste (frontend/) durur ve buraya ağ üzerinden bağlanmaz;
+tarayıcı bu servise doğrudan gelir. Bu servis yalnız JSON konuşur.
 Çalıştırmak için: uvicorn api:app --reload
 """
 
@@ -20,9 +21,10 @@ logger = logging.getLogger("ai-doctor")
 
 app = FastAPI(title="AI Doktor Asistanı")
 
-# Frontend aynı origin'den (nginx proxy) geliyorsa CORS'a hiç gerek yok.
-# Ayrı bir alan adına kurulduysa FRONTEND_URL doldurulmalı; boşsa hepsine izin
-# verilir ki yerel geliştirmede vite sunucusu engellenmesin.
+# Frontend ayrı bir serviste ve ayrı bir alan adında; tarayıcı API'ye başka
+# bir origin'den geldiği için CORS şart. Üretimde FRONTEND_URL doldurulur ve
+# izin yalnız ona verilir; boşsa hepsine izin verilir ki yerel geliştirmede
+# vite sunucusu engellenmesin.
 FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
 
 app.add_middleware(

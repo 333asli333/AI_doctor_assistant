@@ -25,14 +25,14 @@ Kullanıcının adını, yaşını ve sağlık şikayetini alarak kişiselleşti
 
 ### Mimari
 
-İki bağımsız Docker kompozisyonu. SSL'i sunucudaki ters vekil bitirir.
+Birbirine bağımlı olmayan iki servis. SSL'i sunucudaki ters vekil bitirir.
 
-| Parça | Yol | Host portu |
-|---|---|---|
-| Backend — FastAPI + LangChain | `backend/` | 8003 |
-| Frontend — React + Vite + nginx | `frontend/` | 8002 |
+| Parça | Yol | Alan adı | Host portu |
+|---|---|---|---|
+| Backend — FastAPI + LangChain | `backend/` | `doctor-assistant-api.aisli.dev` | 8003 |
+| Frontend — React + Vite + nginx | `frontend/` | `doctor-assistant.aisli.dev` | 8002 |
 
-Frontend, `/chat` ve `/health` isteklerini ortak docker ağı üzerinden backend'e proxy'ler; bu yüzden tek alan adı yeter. Ayrı bir API alan adı isterseniz `VITE_API_BASE` doldurulup **imaj yeniden derlenir** (adres derlemeye gömülür).
+Frontend nginx'i yalnız statik dosya servis eder, backend'e bağlanmaz. Tarayıcı API'ye `VITE_API_BASE` adresinden doğrudan gider; bu adres **derlemeye gömülür**, değişirse imaj yeniden derlenmelidir. Backend de `FRONTEND_URL` ile yalnız frontend'in origin'ine CORS izni verir.
 
 ```
 ai-doctor/
@@ -51,12 +51,6 @@ ai-doctor/
 
 ### Kurulum
 
-Ortak ağ bir kez oluşturulur:
-
-```bash
-docker network create ai-doctor
-```
-
 **Backend**
 
 ```bash
@@ -70,7 +64,7 @@ make health               # {"status":"ok", ...}
 
 ```bash
 cd frontend
-make up
+VITE_API_BASE=http://localhost:8003 make up    # yerel backend'e bağlan
 ```
 
 Tarayıcıda `http://localhost:8002` adresini açın.
@@ -81,7 +75,7 @@ Docker olmadan, iki terminalde:
 
 ```bash
 cd backend  && make dev        # uvicorn :8000, canlı yeniden yükleme
-cd frontend && make dev        # vite :5173, /chat isteklerini :8000'e proxy'ler
+cd frontend && make dev        # vite :5173, /chat isteklerini :8000'e proxy'ler (yalnız dev)
 ```
 
 Terminal sürümü için: `cd backend && make terminal`
@@ -105,11 +99,11 @@ Varsayılan `google/gemini-2.5-flash` (~0.30$/1M token). OpenRouter'da **ücrets
 
 Sunucu Dokploy ile yönetilir, SSL'i ters vekil bitirir. Sunucuda elle nginx ayarı yapılmaz, certbot çalıştırılmaz.
 
-1. **DNS (Cloudflare):** `doctor-assistant` için A kaydı → sunucu IP'si.
-2. **Backend servisi:** Build type `Dockerfile`, Build path `backend/`, Environment'a `OPENROUTER_API_KEY`. Alan adı gerekmez.
-3. **Frontend servisi:** Build type `Dockerfile`, Build path `frontend/`, Domain `doctor-assistant.aisli.dev`, **Container Port 80**.
+1. **DNS (Cloudflare):** `doctor-assistant` ve `doctor-assistant-api` için A kaydı → sunucu IP'si.
+2. **Backend servisi:** Build Type **Dockerfile** (Nixpacks değil), Build Path `/backend`, Environment'a `OPENROUTER_API_KEY` ve `FRONTEND_URL=https://doctor-assistant.aisli.dev`. Domain `doctor-assistant-api.aisli.dev`, **Container Port 8000**.
+3. **Frontend servisi:** Build Type **Dockerfile**, Build Path `/frontend`, Domain `doctor-assistant.aisli.dev`, **Container Port 80**.
 
-İki servis de aynı docker ağında olmalı ki nginx backend'e ulaşabilsin.
+Frontend varsayılan olarak `https://doctor-assistant-api.aisli.dev` adresine derlenir. Farklı bir API adresi gerekirse Build Args'a `VITE_API_BASE` girilip yeniden deploy edilir.
 
 ---
 
@@ -127,15 +121,14 @@ A conversational AI health assistant that collects the user's name, age, and hea
 | LLM Management | LangChain |
 | Backend | FastAPI + Uvicorn |
 | Frontend | React + Vite + TypeScript (bun) |
-| Web server | nginx |
+| Web server | nginx (static only) |
 | Deployment | Docker + Dokploy (self-hosted) |
 
 ### Quick start
 
 ```bash
-docker network create ai-doctor
 cd backend  && cp .env.example .env && make up
-cd ../frontend && make up
+cd ../frontend && VITE_API_BASE=http://localhost:8003 make up
 ```
 
 Open `http://localhost:8002`.

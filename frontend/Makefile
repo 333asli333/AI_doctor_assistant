@@ -5,7 +5,7 @@ COMPOSE := docker compose
 BUN     := bun
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build preview typecheck net up down logs restart clean
+.PHONY: help install dev build preview typecheck up down logs restart clean
 
 help:  ## Hedefleri listele
 	@grep -hE '^[a-z-]+:.*?##' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -25,10 +25,7 @@ preview: build  ## Derlemeyi yerelde önizle
 typecheck: install  ## TypeScript denetimi
 	$(BUN) run typecheck
 
-net:  ## Ortak docker ağını oluştur (bir kez)
-	-docker network create ai-doctor
-
-up: net  ## Konteyneri derle ve başlat
+up:  ## Konteyneri derle ve başlat
 	$(COMPOSE) up -d --build
 
 down:  ## Konteyneri durdur

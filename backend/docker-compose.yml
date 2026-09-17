@@ -2,9 +2,12 @@
 # Kullanım, backend/ içinden:  docker compose up -d --build
 # .env doldurulmuş olmalı (bkz. .env.example).
 #
-# Frontend AYRI kompozisyondadır (../frontend/docker-compose.yml) ve bu servise
-# ortak ağ üzerinden "backend" adıyla ulaşır.
-# İlk kurulumda ortak ağı bir kez oluştur:  docker network create ai-doctor
+# Frontend AYRI kompozisyondadır ve bu servise ağ üzerinden bağlanmaz;
+# tarayıcı API'ye kendi alan adından doğrudan gelir. Bu yüzden .env'de
+# FRONTEND_URL dolu olmalı, yoksa CORS herkese açık kalır.
+#
+# Sunucudaki ters vekil:  doctor-assistant-api.aisli.dev  ->  host 8003
+# (8000 ve 8001 aurelia'ya, 8002 bu projenin frontend'ine ait.)
 
 services:
   backend:
@@ -12,9 +15,6 @@ services:
     container_name: ai-doctor-backend
     restart: unless-stopped
     env_file: .env
-    # Ters vekil doğrudan bu porta bakacaksa diye açık; frontend nginx'i
-    # ortak ağ üzerinden eriştiği için zorunlu değil.
-    # Sunucuda 8000/8001 aurelia'ya, 8002 bu projenin frontend'ine ait.
     ports:
       - "${AI_DOCTOR_BACKEND_PORT:-8003}:8000"
     healthcheck:
@@ -23,11 +23,3 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    networks:
-      ai-doctor:
-        aliases:
-          - backend
-
-networks:
-  ai-doctor:
-    external: true
